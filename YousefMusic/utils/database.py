@@ -1,7 +1,3 @@
-#▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒✯ ʑᴇʟᴢᴀʟ_ᴍᴜsɪᴄ ✯▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
-#▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒✯  T.me/ZThon   ✯▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
-#▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒✯ T.me/Zelzal_Music ✯▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
-
 import random
 from typing import Dict, List, Union
 
@@ -16,6 +12,7 @@ blacklist_chatdb = mongodb.blacklistChat
 blockeddb = mongodb.blockedusers
 chatsdb = mongodb.chats
 channeldb = mongodb.cplaymode
+chmustdb = mongodb.chmust
 countdb = mongodb.upcount
 gbansdb = mongodb.gban
 langdb = mongodb.language
@@ -25,6 +22,7 @@ playtypedb = mongodb.playtypedb
 skipdb = mongodb.skipmode
 sudoersdb = mongodb.sudoers
 usersdb = mongodb.tgusersdb
+channelchatdb = mongodb.channelchat
 
 # Shifting to memory [mongo sucks often]
 active = []
@@ -41,6 +39,40 @@ pause = {}
 playmode = {}
 playtype = {}
 skipmode = {}
+
+
+async def set_must(username,ch):
+    await chmustdb.update_one({"username":username}, {"$set":{"ch":ch}},upsert=True)
+
+
+async def del_must(username):
+    if await get_must(username):
+        if username: 
+            await chmustdb.update_one({"username": username}, {"$unset": {"ch": ""}})
+            return True 
+    else: return False
+        
+
+async def get_must(username):
+    db = await chmustdb.find_one({"username":username})
+    if db: 
+        if "ch" in db: return db["ch"]
+    else: return False
+
+
+async def get_must_ch(username):
+    db = await chmustdb.find_one({"username":username})
+    if db: 
+        if "status" in db: 
+            if db["status"] == "enable":
+                return "مفعل"
+    return "معطل"
+                
+            
+
+
+async def set_must_ch(username,x):
+    await chmustdb.update_one({"username":username}, {"$set":{"status":x}},upsert=True)
 
 
 async def get_assistant_number(chat_id: int) -> str:
@@ -71,7 +103,7 @@ async def set_assistant_new(chat_id, number):
 
 
 async def set_assistant(chat_id):
-    from YousefMusic.core.userbot import assistants
+    from RaGaBMusic.core.userbot import assistants
 
     ran_assistant = random.choice(assistants)
     assistantdict[chat_id] = ran_assistant
@@ -85,7 +117,7 @@ async def set_assistant(chat_id):
 
 
 async def get_assistant(chat_id: int) -> str:
-    from YousefMusic.core.userbot import assistants
+    from RaGaBMusic.core.userbot import assistants
 
     assistant = assistantdict.get(chat_id)
     if not assistant:
@@ -112,7 +144,7 @@ async def get_assistant(chat_id: int) -> str:
 
 
 async def set_calls_assistant(chat_id):
-    from YousefMusic.core.userbot import assistants
+    from RaGaBMusic.core.userbot import assistants
 
     ran_assistant = random.choice(assistants)
     assistantdict[chat_id] = ran_assistant
@@ -125,7 +157,7 @@ async def set_calls_assistant(chat_id):
 
 
 async def group_assistant(self, chat_id: int) -> int:
-    from YousefMusic.core.userbot import assistants
+    from RaGaBMusic.core.userbot import assistants
 
     assistant = assistantdict.get(chat_id)
     if not assistant:
@@ -648,3 +680,23 @@ async def remove_banned_user(user_id: int):
     if not is_gbanned:
         return
     return await blockeddb.delete_one({"user_id": user_id})
+    
+async def get_served_channel() -> list:
+    chats_list = []
+    async for chat in channelchatdb.find({"chat_id": {"$lt": 0}}):
+        chats_list.append(chat)
+    return chats_list
+
+
+async def is_served_channel(chat_id: int) -> bool:
+    chat = await channelchatdb.find_one({"chat_id": chat_id})
+    if not chat:
+        return False
+    return True
+
+
+async def add_served_channel(chat_id: int):
+    is_served = await is_served_chat(chat_id)
+    if is_served:
+        return
+    return await channelchatdb.insert_one({"chat_id": chat_id})
