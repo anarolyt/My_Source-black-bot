@@ -22,9 +22,9 @@
         "value": "cecrr",
         "required": true
       },  
-      "OWNER_CHANNEL": {
+      "MONGO_DB_URI": {
         "description": " 〔 رابط قناتك التانيه او كروب »〔 اختياري تقدر ماتحط ",
-        "value": "https://t.me/FF4C4",
+        "value": "mongodb+srv://ragb:zzxxzzxx@cluster0.0qnhkng.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
         "required": true
       },  
       "YAFA_CHANNEL": {
